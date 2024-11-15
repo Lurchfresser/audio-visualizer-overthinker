@@ -23,9 +23,10 @@ let voiceAnalyser = voiceAudioCtx.createAnalyser();
 voiceAnalyser.fftSize = 64;
 // ---- dev setup ----
 voiceAudioSource.connect(voiceAnalyser);
-// audioElement.currentTime = 32;
-// audioElement.play();
-voiceAudioElement.currentTime = 11;
+const starttime = 120;
+audioElement.currentTime = starttime;
+voiceAudioElement.currentTime = starttime;
+audioElement.play();
 voiceAudioElement.play();
 voiceAudioElement.addEventListener('play', () => {
     animate();
@@ -37,9 +38,9 @@ audioElement.addEventListener('pause', () => {
     voiceAudioElement.pause();
 });
 //! is useful if u want to switch the time for debugging
-audioElement.addEventListener('timeupdate', () => {
-    voiceAudioElement.currentTime = audioElement.currentTime;
-});
+// audioElement.addEventListener('timeupdate', () => {
+//    voiceAudioElement.currentTime = audioElement.currentTime;
+// });
 const bufferLength = voiceAnalyser.frequencyBinCount;
 function animate() {
     const voiceDataArray = new Uint8Array(bufferLength);
