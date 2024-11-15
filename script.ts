@@ -3,8 +3,8 @@ const canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanva
 const voicecheckBox = document.getElementById('voicecheckBox') as HTMLInputElement;
 const intrumentalcheckBox = document.getElementById('instrumentalcheckBox') as HTMLInputElement;
 
-const voiceAudioElement = document.getElementById('voice') as HTMLAudioElement;
 const fullAudioElement: HTMLAudioElement = document.querySelector('#full') as HTMLAudioElement;
+const voiceAudioElement = document.getElementById('voice') as HTMLAudioElement;
 const instrumentalAudioElement: HTMLAudioElement = document.querySelector('#instrumental') as HTMLAudioElement;
 
 
@@ -16,7 +16,7 @@ canvas.height = window.innerHeight;
 // const starttime = 120;
 // fullAudioElement.currentTime = starttime;
 // voiceAudioElement.currentTime = starttime;
-// fullAudioElement.play();
+fullAudioElement.play();
 // voiceAudioElement.play();
 //instrumentalAudioElement.play();
 // ---- dev setup ----
@@ -24,27 +24,59 @@ canvas.height = window.innerHeight;
 
 
 
+// ---- full audio setup ----
+let fullAudioCtx = new AudioContext();
+let fullAudioSource = fullAudioCtx.createMediaElementSource(fullAudioElement);
+let fullLeftAnalyser = fullAudioCtx.createAnalyser();
+let fullRightAnalyser = fullAudioCtx.createAnalyser();
+let fullChannelSplitter = fullAudioCtx.createChannelSplitter(2);
+
+fullAudioSource.connect(fullAudioCtx.destination);
+fullAudioSource.connect(fullChannelSplitter);
+
+fullChannelSplitter.connect(fullLeftAnalyser, 0);
+fullChannelSplitter.connect(fullRightAnalyser, 1);
+
 
 
 
 // ---- voice setup ----
-let voiceAudioCtx = new AudioContext();
+let voiceAudioCtx = new AudioContext(
+    {
+        //TODO: check if this is useful
+        //"latencyHint": "interactive",
+    }
+);
 let voiceAudioSource = voiceAudioCtx.createMediaElementSource(voiceAudioElement);
-voiceAudioSource.connect(voiceAudioCtx.destination);
 let voiceAnalyser = voiceAudioCtx.createAnalyser();
-voiceAnalyser.fftSize = 64;
+
+let isVoicePlaying: boolean = true;
+voiceAudioSource.connect(voiceAudioCtx.destination);
+
 voiceAudioSource.connect(voiceAnalyser);
+
+
 
 // ---- instrumental setup ----
 let instrumentalAudioCtx = new AudioContext();
 let instrumentalAudioSource = instrumentalAudioCtx.createMediaElementSource(instrumentalAudioElement);
-instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
 let instrumentalAnalyserForBars: AnalyserNode = instrumentalAudioCtx.createAnalyser();
 let instrumentalAnalyserForOscilloscope: AnalyserNode = instrumentalAudioCtx.createAnalyser();
+
+let isInstrumentalPlaying: boolean = true;
+instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
+
 instrumentalAudioSource.connect(instrumentalAnalyserForBars);
-instrumentalAnalyserForBars.connect(instrumentalAnalyserForOscilloscope);
+instrumentalAudioSource.connect(instrumentalAnalyserForOscilloscope);
 
 
+
+
+
+
+
+
+// ---- set params ----
 instrumentalAnalyserForBars.maxDecibels = -10;
 instrumentalAnalyserForBars.minDecibels = -70;
 
@@ -54,6 +86,10 @@ instrumentalAnalyserForBars.smoothingTimeConstant = 0.85;
 instrumentalAnalyserForOscilloscope.fftSize = 2048;
 instrumentalAnalyserForOscilloscope.smoothingTimeConstant = 0.99;
 
+fullLeftAnalyser.fftSize = 32;
+fullRightAnalyser.fftSize = 32;
+
+voiceAnalyser.fftSize = 64;
 
 
 const drawCtx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -75,6 +111,7 @@ function animate() {
         let oscilloscopeDataArray = new Uint8Array(instrumentalAnalyserForBars.fftSize);
         instrumentalAnalyserForOscilloscope.getByteTimeDomainData(oscilloscopeDataArray);
         drawOscilloscope(oscilloscopeDataArray);
+        animateLeftRigthDifference(fullLeftAnalyser, fullRightAnalyser);
     }
     requestAnimationFrame(animate);
 }
@@ -160,6 +197,57 @@ function animateColorBars(dataArray: Uint8Array) {
     }
 }
 
+function animateLeftRigthDifference(leftNode: AnalyserNode, rightNode: AnalyserNode) {
+    let leftDataArray = new Uint8Array(leftNode.frequencyBinCount);
+    let rightDataArray = new Uint8Array(rightNode.frequencyBinCount);
+
+    leftNode.getByteFrequencyData(leftDataArray);
+    rightNode.getByteFrequencyData(rightDataArray);
+
+    let difference = getVolumeDifference(leftDataArray, rightDataArray);
+
+
+    drawCtx.fillStyle = 'white';
+    drawCtx.strokeStyle = 'white';
+
+
+    let middleYX = canvas.width / 2;
+    let middleYY = canvas.height / 2;
+
+    drawCtx.fillRect(middleYX, 10, difference, 150);
+
+    drawCtx.rect(middleYX - difference, middleYY - 50, difference * 2, 100);
+}
+
+
+
+
+/// ---- util functions ----
+
+
+function getVolume(dataArray: Uint8Array) {
+    let volume = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        volume += dataArray[i];
+    }
+    return volume / dataArray.length;
+}
+
+function getVolumeDifference(dataArray1: Uint8Array, dataArray2: Uint8Array) {
+    if (dataArray1.length !== dataArray2.length) {
+        throw new Error('dataArray1 and dataArray2 must have the same length');
+    }
+    let difference = 0;
+    for (let i = 0; i < dataArray1.length; i++) {
+        difference -= dataArray1[i];
+        difference += dataArray2[i];
+    }
+    return difference;
+}
+
+
+
+/// ---- event listeners ----
 
 voiceAudioElement.addEventListener('play', () => {
     animate();
@@ -169,6 +257,7 @@ instrumentalAudioElement.addEventListener('play', () => {
 });
 
 fullAudioElement.addEventListener('play', () => {
+    animate();
     voiceAudioElement.play();
     instrumentalAudioElement.play();
 });
@@ -178,23 +267,32 @@ fullAudioElement.addEventListener('pause', () => {
 
 });
 //! is useful if u want to switch the time for debugging
-// audioElement.addEventListener('timeupdate', () => {
-//    voiceAudioElement.currentTime = audioElement.currentTime;
-// });
+fullAudioElement.addEventListener('timeupdate', () => {
+    //    voiceAudioElement.currentTime = fullAudioElement.currentTime;
+    //     instrumentalAudioElement.currentTime = fullAudioElement.currentTime;
+});
 
 voicecheckBox.addEventListener('change', () => toggleAudio());
 
 intrumentalcheckBox.addEventListener('change', () => toggleAudio());
 
 function toggleAudio() {
-    if (intrumentalcheckBox.checked) {
+    console.log(isInstrumentalPlaying);
+    if (intrumentalcheckBox.checked && !isInstrumentalPlaying) {
+        isInstrumentalPlaying = true;
         instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
-    } else {
+    } else if (!intrumentalcheckBox.checked && isInstrumentalPlaying) {
+        isInstrumentalPlaying = false;
         instrumentalAudioSource.disconnect(instrumentalAudioCtx.destination);
     }
-    if (voicecheckBox.checked) {
+    console.log(isInstrumentalPlaying);
+    if (voicecheckBox.checked && !isVoicePlaying) {
+        isVoicePlaying = true;
         voiceAudioSource.connect(voiceAudioCtx.destination);
-    } else {
+    } else if (!voicecheckBox.checked && isVoicePlaying) {
+        isVoicePlaying = false;
         voiceAudioSource.disconnect(voiceAudioCtx.destination);
     }
 }
+
+toggleAudio();
