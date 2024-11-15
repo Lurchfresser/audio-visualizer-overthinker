@@ -1,26 +1,43 @@
-"use strict";
-const container = document.querySelector('#container');
-const canvas = document.getElementById('canvas');
+const container = document.querySelector('#container') as HTMLDivElement;
+const canvas : HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
+ 
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const drawCtx = canvas.getContext('2d');
-const audioElement = document.querySelector('#audio');
+
+const drawCtx = canvas.getContext('2d') as CanvasRenderingContext2D;
+
+
+
+
+
+const audioElement : HTMLAudioElement = document.querySelector('#audio') as HTMLAudioElement;
+
 const audioCtxRealSong = new AudioContext();
+
 let audioSource = audioCtxRealSong.createMediaElementSource(audioElement);
 let analyser = audioCtxRealSong.createAnalyser();
 audioSource.connect(analyser);
-let fakeAudioElement = document.getElementById('fakeAudio');
+
+
+let fakeAudioElement = document.getElementById('fakeAudio') as HTMLAudioElement;
 let fakeAudioCtx = new AudioContext();
+
 let fakeAudioSource = fakeAudioCtx.createMediaElementSource(fakeAudioElement);
 let fakeAnalyser = fakeAudioCtx.createAnalyser();
 //TODO: Try different values
 fakeAnalyser.fftSize = 256;
+
 // @ts-ignore
 fakeAudioElement.destination = fakeAudioCtx.destination;
+
 fakeAudioSource.connect(fakeAnalyser);
 //fakeAnalyser.connect(fakeAudioCtx.destination);
+
 analyser.connect(audioCtxRealSong.destination);
 analyser.fftSize = 64;
+
+
 audioElement.addEventListener('play', () => {
     fakeAudioElement.play();
     animate();
@@ -32,7 +49,9 @@ audioElement.addEventListener('pause', () => {
 // audioElement.addEventListener('timeupdate', () => {
 //     fakeAudioElement.currentTime = audioElement.currentTime;
 // });
+
 const bufferLength = fakeAnalyser.frequencyBinCount;
+
 function animate() {
     const dataArray = new Uint8Array(bufferLength);
     const barWidth = canvas.width / bufferLength;
@@ -53,4 +72,5 @@ function animate() {
         x += barWidth;
     }
     requestAnimationFrame(animate);
+
 }
