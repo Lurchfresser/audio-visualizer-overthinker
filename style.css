@@ -32,3 +32,11 @@
     margin: 50px auto;
     display: block;
 }
+
+label, input[type="checkbox"] {
+    display: block;
+    color: white;
+    z-index: 2; /* Ensure label and checkbox are above the canvas */
+    position: relative; /* Ensure z-index works */
+    margin: 10px auto;
+}

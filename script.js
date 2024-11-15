@@ -1,6 +1,19 @@
 "use strict";
 const container = document.querySelector('#container');
 const canvas = document.getElementById('canvas');
+const checkBox = document.getElementById('fakeVolume');
+checkBox.addEventListener('change', () => {
+    if (checkBox.checked) {
+        // @ts-ignore
+        fakeAudioElement.destination = audioElement.destination;
+        // fakeAudioElement.destination = fakeAnalyser.destination;
+    }
+    else {
+        // @ts-ignore
+        // fakeAudioElement.destination = fakeAudioCtx.destination;
+        fakeAudioElement.destination = fakeAnalyser.destination;
+    }
+});
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const drawCtx = canvas.getContext('2d');
@@ -21,9 +34,11 @@ fakeAudioSource.connect(fakeAnalyser);
 //fakeAnalyser.connect(fakeAudioCtx.destination);
 analyser.connect(audioCtxRealSong.destination);
 analyser.fftSize = 64;
+fakeAudioElement.addEventListener('play', () => {
+    animate();
+});
 audioElement.addEventListener('play', () => {
     fakeAudioElement.play();
-    animate();
 });
 audioElement.addEventListener('pause', () => {
     fakeAudioElement.pause();
@@ -37,7 +52,7 @@ function animate() {
     const dataArray = new Uint8Array(bufferLength);
     const barWidth = canvas.width / bufferLength;
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
-    if (audioElement.paused) {
+    if (fakeAudioElement.paused) {
         return;
     }
     fakeAnalyser.getByteFrequencyData(dataArray);

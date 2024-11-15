@@ -1,6 +1,18 @@
 const container = document.querySelector('#container') as HTMLDivElement;
 const canvas : HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
- 
+const checkBox = document.getElementById('fakeVolume') as HTMLInputElement;
+
+checkBox.addEventListener('change', () => {
+    if (checkBox.checked) {
+        // @ts-ignore
+        //fakeAudioElement.destination = audioElement.destination;
+        // fakeAudioElement.destination = fakeAnalyser.destination;
+    } else {
+        // @ts-ignore
+        // fakeAudioElement.destination = fakeAudioCtx.destination;
+        //fakeAudioElement.destination = fakeAnalyser.destination;
+    }
+});
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -37,10 +49,12 @@ fakeAudioSource.connect(fakeAnalyser);
 analyser.connect(audioCtxRealSong.destination);
 analyser.fftSize = 64;
 
+fakeAudioElement.addEventListener('play', () => {
+   animate();
+});
 
 audioElement.addEventListener('play', () => {
     fakeAudioElement.play();
-    animate();
 });
 audioElement.addEventListener('pause', () => {
     fakeAudioElement.pause();
@@ -56,7 +70,7 @@ function animate() {
     const dataArray = new Uint8Array(bufferLength);
     const barWidth = canvas.width / bufferLength;
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
-    if (audioElement.paused) {
+    if (fakeAudioElement.paused) {
         return;
     }
     fakeAnalyser.getByteFrequencyData(dataArray);
