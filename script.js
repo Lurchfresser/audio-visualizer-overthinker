@@ -2,46 +2,26 @@
 const container = document.querySelector('#container');
 const canvas = document.getElementById('canvas');
 const checkBox = document.getElementById('fakeVolume');
-checkBox.addEventListener('change', () => {
-    if (checkBox.checked) {
-        voiceAudioSource.connect(voiceAudioCtx.destination);
-    }
-    else {
-        voiceAudioSource.disconnect(voiceAudioCtx.destination);
-    }
-});
+const voiceAudioElement = document.getElementById('voice');
+const fullAudioElement = document.querySelector('#full');
+const instrumentalAudioElement = document.querySelector('#instrumental');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const drawCtx = canvas.getContext('2d');
-const audioElement = document.querySelector('#full');
-let voiceAudioElement = document.getElementById('voice');
+// ---- dev setup ----
+const starttime = 120;
+fullAudioElement.currentTime = starttime;
+voiceAudioElement.currentTime = starttime;
+fullAudioElement.play();
+voiceAudioElement.play();
+// ---- dev setup ----
 let voiceAudioCtx = new AudioContext();
 let voiceAudioSource = voiceAudioCtx.createMediaElementSource(voiceAudioElement);
 voiceAudioSource.connect(voiceAudioCtx.destination);
 let voiceAnalyser = voiceAudioCtx.createAnalyser();
-//TODO: Try different values
 voiceAnalyser.fftSize = 64;
-// ---- dev setup ----
 voiceAudioSource.connect(voiceAnalyser);
-const starttime = 120;
-audioElement.currentTime = starttime;
-voiceAudioElement.currentTime = starttime;
-audioElement.play();
-voiceAudioElement.play();
-voiceAudioElement.addEventListener('play', () => {
-    animate();
-});
-audioElement.addEventListener('play', () => {
-    voiceAudioElement.play();
-});
-audioElement.addEventListener('pause', () => {
-    voiceAudioElement.pause();
-});
-//! is useful if u want to switch the time for debugging
-// audioElement.addEventListener('timeupdate', () => {
-//    voiceAudioElement.currentTime = audioElement.currentTime;
-// });
 const bufferLength = voiceAnalyser.frequencyBinCount;
+const drawCtx = canvas.getContext('2d');
 function animate() {
     const voiceDataArray = new Uint8Array(bufferLength);
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
@@ -69,12 +49,12 @@ function animateVoice(voiceDataArray) {
             continue;
         }
         drawCtx.beginPath();
-        drawCtx.moveTo(middleX - barWidth * i * 1.2, middleY + barHeight / 2);
-        drawCtx.lineTo(middleX - barWidth * i * 1.2, middleY - barHeight / 2);
+        drawCtx.moveTo(middleX - barWidth * i * 1.4, middleY + barHeight / 2);
+        drawCtx.lineTo(middleX - barWidth * i * 1.4, middleY - barHeight / 2);
         drawCtx.stroke();
         drawCtx.beginPath();
-        drawCtx.moveTo(middleX + barWidth * i * 1.2, middleY + barHeight / 2);
-        drawCtx.lineTo(middleX + barWidth * i * 1.2, middleY - barHeight / 2);
+        drawCtx.moveTo(middleX + barWidth * i * 1.4, middleY + barHeight / 2);
+        drawCtx.lineTo(middleX + barWidth * i * 1.4, middleY - barHeight / 2);
         drawCtx.stroke();
     }
 }
@@ -92,3 +72,24 @@ function animateColorBars(dataArray) {
         x += barWidth;
     }
 }
+voiceAudioElement.addEventListener('play', () => {
+    animate();
+});
+fullAudioElement.addEventListener('play', () => {
+    voiceAudioElement.play();
+});
+fullAudioElement.addEventListener('pause', () => {
+    voiceAudioElement.pause();
+});
+//! is useful if u want to switch the time for debugging
+// audioElement.addEventListener('timeupdate', () => {
+//    voiceAudioElement.currentTime = audioElement.currentTime;
+// });
+checkBox.addEventListener('change', () => {
+    if (checkBox.checked) {
+        voiceAudioSource.connect(voiceAudioCtx.destination);
+    }
+    else {
+        voiceAudioSource.disconnect(voiceAudioCtx.destination);
+    }
+});
