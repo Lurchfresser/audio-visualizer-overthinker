@@ -14,25 +14,37 @@ voiceAudioElement.currentTime = starttime;
 fullAudioElement.play();
 voiceAudioElement.play();
 // ---- dev setup ----
+// ---- voice setup ----
 let voiceAudioCtx = new AudioContext();
 let voiceAudioSource = voiceAudioCtx.createMediaElementSource(voiceAudioElement);
 voiceAudioSource.connect(voiceAudioCtx.destination);
 let voiceAnalyser = voiceAudioCtx.createAnalyser();
 voiceAnalyser.fftSize = 64;
 voiceAudioSource.connect(voiceAnalyser);
-const bufferLength = voiceAnalyser.frequencyBinCount;
+// ---- instrumental setup ----
+let instrumentalAudioCtx = new AudioContext();
+let instrumentalAudioSource = instrumentalAudioCtx.createMediaElementSource(instrumentalAudioElement);
+instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
+let instrumentalAnalyser = instrumentalAudioCtx.createAnalyser();
+instrumentalAnalyser.fftSize = 64;
+instrumentalAudioSource.connect(instrumentalAnalyser);
 const drawCtx = canvas.getContext('2d');
 function animate() {
-    const voiceDataArray = new Uint8Array(bufferLength);
+    const voiceDataArray = new Uint8Array(voiceAnalyser.frequencyBinCount);
+    const instrumentalDataArray = new Uint8Array(instrumentalAnalyser.frequencyBinCount);
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
-    if (voiceAudioElement.paused) {
-        return;
-    }
     voiceAnalyser.getByteFrequencyData(voiceDataArray);
-    animateVoice(voiceDataArray);
+    instrumentalAnalyser.getByteFrequencyData(instrumentalDataArray);
+    if (!voiceAudioElement.paused) {
+        animateVoice(voiceDataArray);
+    }
+    if (!instrumentalAudioElement.paused) {
+        animateColorBars(instrumentalDataArray);
+    }
     requestAnimationFrame(animate);
 }
 function animateVoice(voiceDataArray) {
+    const bufferLength = voiceDataArray.length;
     const barWidth = canvas.width / bufferLength / 2;
     let middleX = canvas.width / 2;
     let middleY = canvas.height / 2;
@@ -60,6 +72,7 @@ function animateVoice(voiceDataArray) {
 }
 function animateColorBars(dataArray) {
     let x = 0;
+    const bufferLength = dataArray.length;
     const barWidth = canvas.width / bufferLength;
     for (let i = 0; i < bufferLength; i++) {
         let barHeight;
@@ -73,6 +86,9 @@ function animateColorBars(dataArray) {
     }
 }
 voiceAudioElement.addEventListener('play', () => {
+    animate();
+});
+instrumentalAudioElement.addEventListener('play', () => {
     animate();
 });
 fullAudioElement.addEventListener('play', () => {
