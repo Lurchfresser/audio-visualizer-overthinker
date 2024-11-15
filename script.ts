@@ -25,12 +25,6 @@ const drawCtx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 const audioElement : HTMLAudioElement = document.querySelector('#audio') as HTMLAudioElement;
 
-const audioCtxRealSong = new AudioContext();
-
-let audioSource = audioCtxRealSong.createMediaElementSource(audioElement);
-let analyser = audioCtxRealSong.createAnalyser();
-audioSource.connect(analyser);
-
 
 let fakeAudioElement = document.getElementById('fakeAudio') as HTMLAudioElement;
 let fakeAudioCtx = new AudioContext();
@@ -40,14 +34,9 @@ let fakeAnalyser = fakeAudioCtx.createAnalyser();
 //TODO: Try different values
 fakeAnalyser.fftSize = 256;
 
-// @ts-ignore
-fakeAudioElement.destination = fakeAudioCtx.destination;
 
 fakeAudioSource.connect(fakeAnalyser);
-//fakeAnalyser.connect(fakeAudioCtx.destination);
 
-analyser.connect(audioCtxRealSong.destination);
-analyser.fftSize = 64;
 
 fakeAudioElement.addEventListener('play', () => {
    animate();

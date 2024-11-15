@@ -5,35 +5,26 @@ const checkBox = document.getElementById('fakeVolume');
 checkBox.addEventListener('change', () => {
     if (checkBox.checked) {
         // @ts-ignore
-        fakeAudioElement.destination = audioElement.destination;
+        //fakeAudioElement.destination = audioElement.destination;
         // fakeAudioElement.destination = fakeAnalyser.destination;
     }
     else {
         // @ts-ignore
         // fakeAudioElement.destination = fakeAudioCtx.destination;
-        fakeAudioElement.destination = fakeAnalyser.destination;
+        //fakeAudioElement.destination = fakeAnalyser.destination;
     }
 });
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const drawCtx = canvas.getContext('2d');
 const audioElement = document.querySelector('#audio');
-const audioCtxRealSong = new AudioContext();
-let audioSource = audioCtxRealSong.createMediaElementSource(audioElement);
-let analyser = audioCtxRealSong.createAnalyser();
-audioSource.connect(analyser);
 let fakeAudioElement = document.getElementById('fakeAudio');
 let fakeAudioCtx = new AudioContext();
 let fakeAudioSource = fakeAudioCtx.createMediaElementSource(fakeAudioElement);
 let fakeAnalyser = fakeAudioCtx.createAnalyser();
 //TODO: Try different values
 fakeAnalyser.fftSize = 256;
-// @ts-ignore
-fakeAudioElement.destination = fakeAudioCtx.destination;
 fakeAudioSource.connect(fakeAnalyser);
-//fakeAnalyser.connect(fakeAudioCtx.destination);
-analyser.connect(audioCtxRealSong.destination);
-analyser.fftSize = 64;
 fakeAudioElement.addEventListener('play', () => {
     animate();
 });
