@@ -14,9 +14,6 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const drawCtx = canvas.getContext('2d');
 const audioElement = document.querySelector('#full');
-//8 sek
-audioElement.currentTime = 8;
-audioElement.play();
 let voiceAudioElement = document.getElementById('voice');
 let voiceAudioCtx = new AudioContext();
 let voiceAudioSource = voiceAudioCtx.createMediaElementSource(voiceAudioElement);
@@ -24,8 +21,12 @@ voiceAudioSource.connect(voiceAudioCtx.destination);
 let voiceAnalyser = voiceAudioCtx.createAnalyser();
 //TODO: Try different values
 voiceAnalyser.fftSize = 64;
+// ---- dev setup ----
 voiceAudioSource.connect(voiceAnalyser);
-voiceAudioSource.disconnect(voiceAudioCtx.destination);
+// audioElement.currentTime = 32;
+// audioElement.play();
+voiceAudioElement.currentTime = 11;
+voiceAudioElement.play();
 voiceAudioElement.addEventListener('play', () => {
     animate();
 });
@@ -47,7 +48,6 @@ function animate() {
         return;
     }
     voiceAnalyser.getByteFrequencyData(voiceDataArray);
-    animateColorBars(voiceDataArray);
     animateVoice(voiceDataArray);
     requestAnimationFrame(animate);
 }
@@ -55,9 +55,12 @@ function animateVoice(voiceDataArray) {
     const barWidth = canvas.width / bufferLength / 2;
     let middleX = canvas.width / 2;
     let middleY = canvas.height / 2;
-    for (let i = 0; i < bufferLength; i++) {
+    let jiDistance = 10;
+    for (let j = jiDistance; j < bufferLength; j++) {
+        let i = j - jiDistance;
         let barHeight;
         barHeight = voiceDataArray[i];
+        barHeight -= 100;
         drawCtx.strokeStyle = `white`;
         drawCtx.lineWidth = barWidth; // Set the thickness of the lines
         drawCtx.lineCap = 'round'; // Set the line cap to round
