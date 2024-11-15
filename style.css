@@ -33,7 +33,6 @@ audio {
     display: block;
 }
 
-label,
 input[type="checkbox"] {
     display: block;
     color: white;
@@ -41,7 +40,6 @@ input[type="checkbox"] {
     /* Ensure label and checkbox are above the canvas */
     position: relative;
     /* Ensure z-index works */
-    margin: 10px auto;
 }
 
 h1 {
