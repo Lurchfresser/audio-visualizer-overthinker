@@ -6,8 +6,8 @@
 
 #container {
     position: absolute;
-    top:0;
-    left:0;
+    top: 0;
+    left: 0;
     background: black;
     width: 100%;
     height: 100%;
@@ -21,9 +21,9 @@
     height: 100%;
 }
 
-#audio {
+audio {
     width: 100%;
-    margin: 50px auto;
+    margin: 20px auto;
     display: block;
 }
 
@@ -33,10 +33,23 @@
     display: block;
 }
 
-label, input[type="checkbox"] {
+label,
+input[type="checkbox"] {
     display: block;
     color: white;
-    z-index: 2; /* Ensure label and checkbox are above the canvas */
-    position: relative; /* Ensure z-index works */
+    z-index: 2;
+    /* Ensure label and checkbox are above the canvas */
+    position: relative;
+    /* Ensure z-index works */
     margin: 10px auto;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+}
+
+h2 {
+    color: white;
+    text-align: center;
 }

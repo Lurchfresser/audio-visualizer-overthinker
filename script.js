@@ -69,12 +69,12 @@ function animateVoice(voiceDataArray) {
             continue;
         }
         drawCtx.beginPath();
-        drawCtx.moveTo(middleX - barWidth * i, middleY + barHeight / 2);
-        drawCtx.lineTo(middleX - barWidth * i, middleY - barHeight / 2);
+        drawCtx.moveTo(middleX - barWidth * i * 1.2, middleY + barHeight / 2);
+        drawCtx.lineTo(middleX - barWidth * i * 1.2, middleY - barHeight / 2);
         drawCtx.stroke();
         drawCtx.beginPath();
-        drawCtx.moveTo(middleX + barWidth * i, middleY + barHeight / 2);
-        drawCtx.lineTo(middleX + barWidth * i, middleY - barHeight / 2);
+        drawCtx.moveTo(middleX + barWidth * i * 1.2, middleY + barHeight / 2);
+        drawCtx.lineTo(middleX + barWidth * i * 1.2, middleY - barHeight / 2);
         drawCtx.stroke();
     }
 }
