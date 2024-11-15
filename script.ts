@@ -4,13 +4,9 @@ const checkBox = document.getElementById('fakeVolume') as HTMLInputElement;
 
 checkBox.addEventListener('change', () => {
     if (checkBox.checked) {
-        // @ts-ignore
-        //fakeAudioElement.destination = audioElement.destination;
-        // fakeAudioElement.destination = fakeAnalyser.destination;
+        fakeAudioSource.connect(fakeAudioCtx.destination);
     } else {
-        // @ts-ignore
-        // fakeAudioElement.destination = fakeAudioCtx.destination;
-        //fakeAudioElement.destination = fakeAnalyser.destination;
+        fakeAudioSource.disconnect(fakeAudioCtx.destination);
     }
 });
 
@@ -30,6 +26,7 @@ let fakeAudioElement = document.getElementById('fakeAudio') as HTMLAudioElement;
 let fakeAudioCtx = new AudioContext();
 
 let fakeAudioSource = fakeAudioCtx.createMediaElementSource(fakeAudioElement);
+fakeAudioSource.connect(fakeAudioCtx.destination);
 let fakeAnalyser = fakeAudioCtx.createAnalyser();
 //TODO: Try different values
 fakeAnalyser.fftSize = 256;

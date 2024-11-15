@@ -4,14 +4,10 @@ const canvas = document.getElementById('canvas');
 const checkBox = document.getElementById('fakeVolume');
 checkBox.addEventListener('change', () => {
     if (checkBox.checked) {
-        // @ts-ignore
-        //fakeAudioElement.destination = audioElement.destination;
-        // fakeAudioElement.destination = fakeAnalyser.destination;
+        fakeAudioSource.connect(fakeAudioCtx.destination);
     }
     else {
-        // @ts-ignore
-        // fakeAudioElement.destination = fakeAudioCtx.destination;
-        //fakeAudioElement.destination = fakeAnalyser.destination;
+        fakeAudioSource.disconnect(fakeAudioCtx.destination);
     }
 });
 canvas.width = window.innerWidth;
@@ -21,6 +17,7 @@ const audioElement = document.querySelector('#audio');
 let fakeAudioElement = document.getElementById('fakeAudio');
 let fakeAudioCtx = new AudioContext();
 let fakeAudioSource = fakeAudioCtx.createMediaElementSource(fakeAudioElement);
+fakeAudioSource.connect(fakeAudioCtx.destination);
 let fakeAnalyser = fakeAudioCtx.createAnalyser();
 //TODO: Try different values
 fakeAnalyser.fftSize = 256;
