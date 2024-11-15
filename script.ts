@@ -4,9 +4,9 @@ const checkBox = document.getElementById('fakeVolume') as HTMLInputElement;
 
 checkBox.addEventListener('change', () => {
     if (checkBox.checked) {
-        fakeAudioSource.connect(fakeAudioCtx.destination);
+        voiceAudioSource.connect(voiceAudioCtx.destination);
     } else {
-        fakeAudioSource.disconnect(fakeAudioCtx.destination);
+        voiceAudioSource.disconnect(voiceAudioCtx.destination);
     }
 });
 
@@ -19,47 +19,47 @@ const drawCtx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 
 
-const audioElement : HTMLAudioElement = document.querySelector('#audio') as HTMLAudioElement;
+const audioElement : HTMLAudioElement = document.querySelector('#full') as HTMLAudioElement;
 
 
-let fakeAudioElement = document.getElementById('fakeAudio') as HTMLAudioElement;
-let fakeAudioCtx = new AudioContext();
+let voiceAudioElement = document.getElementById('voice') as HTMLAudioElement;
+let voiceAudioCtx = new AudioContext();
 
-let fakeAudioSource = fakeAudioCtx.createMediaElementSource(fakeAudioElement);
-fakeAudioSource.connect(fakeAudioCtx.destination);
-let fakeAnalyser = fakeAudioCtx.createAnalyser();
+let voiceAudioSource = voiceAudioCtx.createMediaElementSource(voiceAudioElement);
+voiceAudioSource.connect(voiceAudioCtx.destination);
+let voiceAnalyser = voiceAudioCtx.createAnalyser();
 //TODO: Try different values
-fakeAnalyser.fftSize = 256;
+voiceAnalyser.fftSize = 256;
 
 
-fakeAudioSource.connect(fakeAnalyser);
+voiceAudioSource.connect(voiceAnalyser);
 
 
-fakeAudioElement.addEventListener('play', () => {
+voiceAudioElement.addEventListener('play', () => {
    animate();
 });
 
 audioElement.addEventListener('play', () => {
-    fakeAudioElement.play();
+    voiceAudioElement.play();
 });
 audioElement.addEventListener('pause', () => {
-    fakeAudioElement.pause();
+    voiceAudioElement.pause();
 });
 //! is useful if u want to switch the time for debugging
 // audioElement.addEventListener('timeupdate', () => {
-//     fakeAudioElement.currentTime = audioElement.currentTime;
+//     voiceAudioElement.currentTime = audioElement.currentTime;
 // });
 
-const bufferLength = fakeAnalyser.frequencyBinCount;
+const bufferLength = voiceAnalyser.frequencyBinCount;
 
 function animate() {
     const dataArray = new Uint8Array(bufferLength);
     const barWidth = canvas.width / bufferLength;
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
-    if (fakeAudioElement.paused) {
+    if (voiceAudioElement.paused) {
         return;
     }
-    fakeAnalyser.getByteFrequencyData(dataArray);
+    voiceAnalyser.getByteFrequencyData(dataArray);
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
         let barHeight;
