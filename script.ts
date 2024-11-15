@@ -1,5 +1,5 @@
 const container = document.querySelector('#container') as HTMLDivElement;
-const canvas : HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
+const canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
 const checkBox = document.getElementById('fakeVolume') as HTMLInputElement;
 
 checkBox.addEventListener('change', () => {
@@ -19,8 +19,10 @@ const drawCtx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 
 
-const audioElement : HTMLAudioElement = document.querySelector('#full') as HTMLAudioElement;
-
+const audioElement: HTMLAudioElement = document.querySelector('#full') as HTMLAudioElement;
+//8 sek
+audioElement.currentTime = 8;
+audioElement.play();
 
 let voiceAudioElement = document.getElementById('voice') as HTMLAudioElement;
 let voiceAudioCtx = new AudioContext();
@@ -29,14 +31,15 @@ let voiceAudioSource = voiceAudioCtx.createMediaElementSource(voiceAudioElement)
 voiceAudioSource.connect(voiceAudioCtx.destination);
 let voiceAnalyser = voiceAudioCtx.createAnalyser();
 //TODO: Try different values
-voiceAnalyser.fftSize = 256;
+voiceAnalyser.fftSize = 64;
 
 
 voiceAudioSource.connect(voiceAnalyser);
+voiceAudioSource.disconnect(voiceAudioCtx.destination);
 
 
 voiceAudioElement.addEventListener('play', () => {
-   animate();
+    animate();
 });
 
 audioElement.addEventListener('play', () => {
@@ -46,21 +49,57 @@ audioElement.addEventListener('pause', () => {
     voiceAudioElement.pause();
 });
 //! is useful if u want to switch the time for debugging
-// audioElement.addEventListener('timeupdate', () => {
-//     voiceAudioElement.currentTime = audioElement.currentTime;
-// });
+audioElement.addEventListener('timeupdate', () => {
+    voiceAudioElement.currentTime = audioElement.currentTime;
+});
 
 const bufferLength = voiceAnalyser.frequencyBinCount;
 
 function animate() {
-    const dataArray = new Uint8Array(bufferLength);
-    const barWidth = canvas.width / bufferLength;
+    const voiceDataArray = new Uint8Array(bufferLength);
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
     if (voiceAudioElement.paused) {
         return;
     }
-    voiceAnalyser.getByteFrequencyData(dataArray);
+    voiceAnalyser.getByteFrequencyData(voiceDataArray);
+    animateColorBars(voiceDataArray);
+    animateVoice(voiceDataArray);
+    requestAnimationFrame(animate);
+}
+
+
+function animateVoice(voiceDataArray: Uint8Array) {
+    const barWidth = canvas.width / bufferLength / 2;
+    let middleX = canvas.width / 2;
+    let middleY = canvas.height / 2;
+
+    for (let i = 0; i < bufferLength; i++) {
+        let barHeight;
+        barHeight = voiceDataArray[i];
+        drawCtx.strokeStyle = `white`;
+        drawCtx.lineWidth = barWidth; // Set the thickness of the lines
+        drawCtx.lineCap = 'round'; // Set the line cap to round
+
+
+        if (barHeight < 30){
+            continue;
+        }
+        drawCtx.beginPath();
+        drawCtx.moveTo(middleX - barWidth * i, middleY + barHeight / 2);
+        drawCtx.lineTo(middleX - barWidth * i, middleY - barHeight / 2);
+        drawCtx.stroke();
+
+        drawCtx.beginPath();
+        drawCtx.moveTo(middleX + barWidth * i, middleY + barHeight / 2);
+        drawCtx.lineTo(middleX + barWidth * i, middleY - barHeight / 2);
+        drawCtx.stroke();
+    }
+}
+
+function animateColorBars(dataArray: Uint8Array) {
     let x = 0;
+    const barWidth = canvas.width / bufferLength;
+
     for (let i = 0; i < bufferLength; i++) {
         let barHeight;
         barHeight = dataArray[i];
@@ -71,6 +110,5 @@ function animate() {
         drawCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
         x += barWidth;
     }
-    requestAnimationFrame(animate);
-
 }
+
