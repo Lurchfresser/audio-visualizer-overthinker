@@ -39,10 +39,20 @@ voiceAudioSource.connect(voiceAnalyser);
 let instrumentalAudioCtx = new AudioContext();
 let instrumentalAudioSource = instrumentalAudioCtx.createMediaElementSource(instrumentalAudioElement);
 instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
-let instrumentalAnalyser: AnalyserNode = instrumentalAudioCtx.createAnalyser();
-instrumentalAnalyser.fftSize = 256;
-instrumentalAudioSource.connect(instrumentalAnalyser);
+let instrumentalAnalyserForBars: AnalyserNode = instrumentalAudioCtx.createAnalyser();
+let instrumentalAnalyserForOscilloscope: AnalyserNode = instrumentalAudioCtx.createAnalyser();
+instrumentalAudioSource.connect(instrumentalAnalyserForBars);
+instrumentalAnalyserForBars.connect(instrumentalAnalyserForOscilloscope);
 
+
+instrumentalAnalyserForBars.maxDecibels = -10;
+instrumentalAnalyserForBars.minDecibels = -70;
+
+instrumentalAnalyserForBars.fftSize = 128;
+instrumentalAnalyserForBars.smoothingTimeConstant = 0.85;
+
+instrumentalAnalyserForOscilloscope.fftSize = 2048;
+instrumentalAnalyserForOscilloscope.smoothingTimeConstant = 0.99;
 
 
 
@@ -54,16 +64,16 @@ function animate() {
 
 
     const voiceDataArray = new Uint8Array(voiceAnalyser.frequencyBinCount);
-    const instrumentalDataArray = new Uint8Array(instrumentalAnalyser.frequencyBinCount);
+    const instrumentalDataArray = new Uint8Array(instrumentalAnalyserForBars.frequencyBinCount);
     voiceAnalyser.getByteFrequencyData(voiceDataArray);
-    instrumentalAnalyser.getByteFrequencyData(instrumentalDataArray);
+    instrumentalAnalyserForBars.getByteFrequencyData(instrumentalDataArray);
     if (!voiceAudioElement.paused) {
         animateVoice(voiceDataArray);
     }
     if (!instrumentalAudioElement.paused) {
         animateColorBars(instrumentalDataArray);
-        let oscilloscopeDataArray = new Uint8Array(instrumentalAnalyser.fftSize);
-        instrumentalAnalyser.getByteTimeDomainData(oscilloscopeDataArray);
+        let oscilloscopeDataArray = new Uint8Array(instrumentalAnalyserForBars.fftSize);
+        instrumentalAnalyserForOscilloscope.getByteTimeDomainData(oscilloscopeDataArray);
         drawOscilloscope(oscilloscopeDataArray);
     }
     requestAnimationFrame(animate);
@@ -140,8 +150,7 @@ function animateColorBars(dataArray: Uint8Array) {
     const barWidth = canvas.width / bufferLength;
 
     for (let i = 0; i < bufferLength; i++) {
-        let barHeight;
-        barHeight = dataArray[i];
+        let barHeight = dataArray[i] * i * 0.2;
         const r = barHeight + (25 * (i / bufferLength));
         const g = 250 * (i / bufferLength);
         const b = 50;
