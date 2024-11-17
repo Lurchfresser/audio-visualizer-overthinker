@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="script.js" defer></script>
+    <script src="dist/animation.js" defer></script>
+    <script src="dist/script.js" defer></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,20 +14,17 @@
         <label for="voicecheckBox">Checkbox:</label>
         <input type="checkbox" id="voicecheckBox">
         <label for="instrumentalcheckBox">Checkbox:</label>
-        <input type="checkbox" id="instrumentalcheckBox">
+        <input type="checkbox" id="instrumentalcheckBox" checked>
         <canvas id="canvas"></canvas>
         <h1>full</h1>
-        <audio id="full" controls src="overthinker/overthinker-full.mp3"></audio>
+        <audio
+         controls id="full" src="overthinker/overthinker-full.mp3"></audio>
         <h2>voice</h2>
         <audio
-            controls
-            src="overthinker/overthinker-voice.mp3"
-            id="voice"></audio>
+          src="overthinker/overthinker-voice.mp3" id="voice"></audio>
         <h2>instrumental</h2>
         <audio
-            controls
-            src="overthinker/overthinker-instrimental.mp3"
-            id="instrumental"></audio>
+         controls src="overthinker/overthinker-instrimental.mp3" id="instrumental"></audio>
     </div>
 </body>
 

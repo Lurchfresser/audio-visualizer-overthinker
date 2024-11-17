@@ -114,7 +114,7 @@
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictPropertyInitialization": true,
-    //output in root directory
+    //output in dest folder
+    "outDir": "./dist",
   },
-  "include": ["*.ts"],
 }
