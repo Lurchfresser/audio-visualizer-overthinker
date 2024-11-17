@@ -146,17 +146,28 @@ function animateColorCircles(dataArray) {
         weightedSum += weightedBarHeight;
     }
     for (let i = 0; i < bufferLength; i++) {
-        let barHeight = weightedBarArray[i];
+        let barHeight = weightedBarArray[i] / 2;
+        if (barHeight < 10)
+            continue;
+        console.log(barHeight);
         const r = barHeight + (25 * (i / bufferLength));
         const g = 250 * (i / bufferLength);
         const b = 50;
         drawCtx.fillStyle = `rgb(${r},${g},${b})`;
-        const numberOfBars = Math.log(i + 1) * 1;
+        drawCtx.strokeStyle = `rgb(${r},${g},${b})`;
+        drawCtx.lineWidth = 10;
+        drawCtx.lineCap = 'round';
+        // const numberOfBars = Math.log(i + 1) * 1;
         for (let degree = 0; degree < 360; degree += 20) {
+            let radiant = ((degree + i) + ((new Date().getMilliseconds() / 15) * barHeight / 100)) * Math.PI / 180;
             drawCtx.save();
             drawCtx.translate(canvas.height / 2, canvas.width / 2);
-            drawCtx.rotate(degree * Math.PI / 180 * new Date().getMilliseconds() / 500);
-            drawCtx.fillRect(150, 0, 10, barHeight);
+            drawCtx.rotate(radiant);
+            // drawCtx.fillRect(150, 0, 10, barHeight);
+            drawCtx.beginPath();
+            drawCtx.moveTo(0, barHeight + 100);
+            drawCtx.lineTo(barHeight, barHeight + 100);
+            drawCtx.stroke();
             drawCtx.restore();
         }
         //drawCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
