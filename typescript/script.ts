@@ -1,7 +1,7 @@
 const container = document.querySelector('#container') as HTMLDivElement;
 const canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
-const voicecheckBox = document.getElementById('voicecheckBox') as HTMLInputElement;
-const intrumentalcheckBox = document.getElementById('instrumentalcheckBox') as HTMLInputElement;
+// const voicecheckBox = document.getElementById('voicecheckBox') as HTMLInputElement;
+// const intrumentalcheckBox = document.getElementById('instrumentalcheckBox') as HTMLInputElement;
 
 const fullAudioElement: HTMLAudioElement = document.querySelector('#full') as HTMLAudioElement;
 const voiceAudioElement = document.getElementById('voice') as HTMLAudioElement;
@@ -19,11 +19,25 @@ voiceAudioElement.currentTime = starttime;
 instrumentalAudioElement.currentTime = starttime;
 
 
+let instrumentalAudioHearable = false;
+let voiceAudioHearable = false;
 
-fullAudioElement.play();
-instrumentalAudioElement.play();
-voiceAudioElement.play();
-//instrumentalAudioElement.play();
+
+function playAll() {
+    fullAudioElement.play();
+    instrumentalAudioElement.play();
+    voiceAudioElement.play();
+}
+
+function pauseAll() {
+    fullAudioElement.pause();
+    instrumentalAudioElement.pause();
+    voiceAudioElement.pause();
+}
+
+// fullAudioElement.play();
+// instrumentalAudioElement.play();
+// voiceAudioElement.play();
 // ---- dev setup ----
 
 
@@ -282,9 +296,6 @@ function animateColorCircles(dataArray: Uint8Array) {
             let direction = ((i % 2 == 0) ? -1 : 1);
             let timeInfluence = map((barHeight ^ 3), 0, maxWeightedValue, 0, (currentTime - timeLastUpdate) / 40);
             startDegreesLastUpdate[i] = ((timeInfluence * direction) + startDegreesLastUpdate[i]) % 360;
-            if (timeInfluence < 0) {
-                console.log(timeInfluence);
-            }
             let radiant = degreeToRadiant(startDegreesLastUpdate[i] + degree);
             drawCtx.save();
             drawCtx.rotate(radiant);
@@ -417,22 +428,34 @@ fullAudioElement.addEventListener('timeupdate', () => {
     //     instrumentalAudioElement.currentTime = fullAudioElement.currentTime;
 });
 
-voicecheckBox.addEventListener('change', () => toggleAudio());
+document.addEventListener('keydown', (event) => {
+    if (event.key === ' ') {
+        if (fullAudioElement.paused) {
+            playAll();
+        } else {
+            pauseAll();
+        }
+    }
+});
 
-intrumentalcheckBox.addEventListener('change', () => toggleAudio());
+// voicecheckBox.addEventListener('change', () => toggleAudio());
 
-function toggleAudio() {
-    if (intrumentalcheckBox.checked && !isInstrumentalPlaying) {
+// intrumentalcheckBox.addEventListener('change', () => toggleAudio());
+
+ 
+
+function toggleAudio() { 
+    if (instrumentalAudioHearable && !isInstrumentalPlaying) {
         isInstrumentalPlaying = true;
         instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
-    } else if (!intrumentalcheckBox.checked && isInstrumentalPlaying) {
+    } else if (!instrumentalAudioHearable && isInstrumentalPlaying) {
         isInstrumentalPlaying = false;
         instrumentalAudioSource.disconnect(instrumentalAudioCtx.destination);
     }
-    if (voicecheckBox.checked && !isVoicePlaying) {
+    if (voiceAudioHearable && !isVoicePlaying) {
         isVoicePlaying = true;
         voiceAudioSource.connect(voiceAudioCtx.destination);
-    } else if (!voicecheckBox.checked && isVoicePlaying) {
+    } else if (!voiceAudioHearable && isVoicePlaying) {
         isVoicePlaying = false;
         voiceAudioSource.disconnect(voiceAudioCtx.destination);
     }
