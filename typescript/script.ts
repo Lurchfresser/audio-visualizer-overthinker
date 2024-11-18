@@ -102,7 +102,7 @@ voiceAnalyser.fftSize = 64;
 
 const drawCtx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-
+let oscilloscopeNoise = 0;
 function animate() {
     drawCtx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -111,17 +111,22 @@ function animate() {
     const instrumentalDataArray = new Uint8Array(instrumentalAnalyserForBars.frequencyBinCount);
     voiceAnalyser.getByteFrequencyData(voiceDataArray);
     instrumentalAnalyserForBars.getByteFrequencyData(instrumentalDataArray);
-    if (!voiceAudioElement.paused) {
-        animateVoice(voiceDataArray);
-    }
+    //!order is important
     if (!instrumentalAudioElement.paused) {
         //animateColorBars(instrumentalDataArray);
         let oscilloscopeDataArray = new Uint8Array(instrumentalAnalyserForBars.fftSize);
         instrumentalAnalyserForOscilloscope.getByteTimeDomainData(oscilloscopeDataArray);
-        drawOscilloscope(oscilloscopeDataArray);
+        animateOscilloscope(oscilloscopeDataArray);
         let ringsDataArray = new Uint8Array(instrumentalAnalyserForRings.fftSize);
         instrumentalAnalyserForRings.getByteFrequencyData(ringsDataArray);
         animateColorCircles(ringsDataArray);
+        let spectralFlatnessArray = new Float32Array(instrumentalAnalyserForRings.fftSize);
+        instrumentalAnalyserForRings.getFloatFrequencyData(spectralFlatnessArray);
+        let spectralFlatness = calculateSpectralFlatness(spectralFlatnessArray);
+        //console.log(spectralFlatness);
+    }
+    if (!voiceAudioElement.paused) {
+        animateVoice(voiceDataArray);
     }
     if (!fullAudioElement.paused) {
         //animateLeftRigthDifference(fullLeftAnalyser, fullRightAnalyser);
@@ -130,11 +135,11 @@ function animate() {
 }
 
 
-function drawOscilloscope(dataArray: Uint8Array) {
+function animateOscilloscope(dataArray: Uint8Array) {
     drawCtx.save();
-    drawCtx.translate(0, 320);
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
+    drawCtx.translate(0, 0);
 
     const bufferLength = dataArray.length;
 
@@ -173,7 +178,7 @@ function animateVoice(voiceDataArray: Uint8Array) {
     let jiDistance = 10;
     drawCtx.save();
     drawCtx.translate(canvas.width / 2, canvas.height / 2);
-    drawCtx.scale(0.18, 0.6);
+    drawCtx.scale(0.18, 0.2);
     for (let j = jiDistance; j < bufferLength; j++) {
         let i = j - jiDistance
         let barHeight;
@@ -207,10 +212,13 @@ instrumentalAnalyserForRings.minDecibels = -70;
 instrumentalAnalyserForRings.fftSize = 32;
 instrumentalAnalyserForRings.smoothingTimeConstant = 0.9;
 const smoothedArray = new Uint8Array(instrumentalAnalyserForRings.fftSize);
-
+const startDegreesLastUpdate = new Array(instrumentalAnalyserForRings.fftSize).fill(0);
+let timeLastUpdate = new Date().getTime();
 
 //measured
 const maxWeightedValue = 1128.6000000000001;
+const maxWeightedSum = 7947.000000000001;
+let minY = 125.5;
 
 function animateColorCircles(dataArray: Uint8Array) {
     let x = 0;
@@ -218,6 +226,7 @@ function animateColorCircles(dataArray: Uint8Array) {
     const barWidth = canvas.width / bufferLength;
     let weightedBarArray = new Uint8Array(bufferLength);
     let weightedSum = 0;
+    let currentTime = new Date().getTime();
     for (let i = 0; i < bufferLength; i++) {
         //! if this changes, also remeasure maxWeightedValue
         let weightedBarHeight = dataArray[i] * i * 0.9;
@@ -229,19 +238,24 @@ function animateColorCircles(dataArray: Uint8Array) {
         //     smoothedArray[i] = 0;
         // }
         //  else
-        const barrierValue = 100;
-        const vanishingValue = barrierValue - 50;
+        const barrierValue = 70;
+        const vanishingValue = 0;
         if (weightedBarHeight > barrierValue && smoothedArray[i] < weightedBarHeight) {
-            smoothedArray[i] = Math.min(weightedBarHeight, 20 + smoothedArray[i]);
+            smoothedArray[i] = Math.min(weightedBarHeight, 10 + smoothedArray[i]);
         } else {
-            let newValue = smoothedArray[i] - 5; // Decrease by 1
+            let newValue = smoothedArray[i] - 3;
             if (newValue > vanishingValue) {
                 smoothedArray[i] = Math.max(0, newValue);
             } else {
                 smoothedArray[i] = 0;
             }
         }
-    }
+    }        //fill the middle circle black
+    drawCtx.fillStyle = 'black';
+    drawCtx.beginPath();
+    drawCtx.arc(canvas.width / 2, canvas.height / 2, minY, 0, 2 * Math.PI);
+    drawCtx.fill();
+
     drawCtx.save();
     drawCtx.translate(canvas.width / 2, canvas.height / 2);
     for (let i = bufferLength - 1; i >= 0; i--) {
@@ -249,7 +263,6 @@ function animateColorCircles(dataArray: Uint8Array) {
         if (barHeight < 1) {
             continue;
         }
-        //console.log(Math.max (1,weightedSum/ 1600));
         const r = barHeight + (25 * (i / bufferLength));
         const g = 250 * (i / bufferLength);
         const b = 50;
@@ -262,18 +275,21 @@ function animateColorCircles(dataArray: Uint8Array) {
             drawCircle(0, 0, weightedBarArray[i] / 10 + 100 + i * 25 + 50);
         }
 
-        const strokeWidth = map(barHeight, 0, 300, 5, 25);
+        const strokeWidth = map(barHeight, 0, 300, 3, 40);
         drawCtx.lineWidth = strokeWidth;
 
-
-        for (let degree = 0; degree < 360; degree += 20) {
+        for (let degree = 0; degree < 360; degree += 15) {
             let direction = ((i % 2 == 0) ? -1 : 1);
-            // let radiant = ((degree) + ((new Date().getMilliseconds() / 15) * barHeight / 100)) * Math.PI / 180;
-            let radiant = degree * Math.PI / 180 + direction * (new Date().getMilliseconds() / 2500) * 1.5 // * Math.max (1,weightedSum/ 1600);
+            let timeInfluence = map((barHeight ^ 3), 0, maxWeightedValue, 0, (currentTime - timeLastUpdate) / 40);
+            startDegreesLastUpdate[i] = ((timeInfluence * direction) + startDegreesLastUpdate[i]) % 360;
+            if (timeInfluence < 0) {
+                console.log(timeInfluence);
+            }
+            let radiant = degreeToRadiant(startDegreesLastUpdate[i] + degree);
             drawCtx.save();
             drawCtx.rotate(radiant);
-
             drawCtx.beginPath();
+            console.log(minY);
             drawCtx.moveTo(0, barHeight / 10 + 100 + i * 25);
             drawCtx.lineTo(100 * direction, barHeight / 10 + 100 + i * 13);
 
@@ -285,6 +301,7 @@ function animateColorCircles(dataArray: Uint8Array) {
         //drawCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
         x += barWidth;
     }
+    timeLastUpdate = currentTime;
     drawCtx.restore();
 }
 
@@ -405,7 +422,6 @@ voicecheckBox.addEventListener('change', () => toggleAudio());
 intrumentalcheckBox.addEventListener('change', () => toggleAudio());
 
 function toggleAudio() {
-    console.log(isInstrumentalPlaying);
     if (intrumentalcheckBox.checked && !isInstrumentalPlaying) {
         isInstrumentalPlaying = true;
         instrumentalAudioSource.connect(instrumentalAudioCtx.destination);
@@ -413,7 +429,6 @@ function toggleAudio() {
         isInstrumentalPlaying = false;
         instrumentalAudioSource.disconnect(instrumentalAudioCtx.destination);
     }
-    console.log(isInstrumentalPlaying);
     if (voicecheckBox.checked && !isVoicePlaying) {
         isVoicePlaying = true;
         voiceAudioSource.connect(voiceAudioCtx.destination);
@@ -472,4 +487,39 @@ function drawCircle(x: number, y: number, radius: number) {
     drawCtx.beginPath();
     drawCtx.arc(x, y, radius, 0, 2 * Math.PI);
     drawCtx.stroke();
+}
+
+function degreeToRadiant(degree: number) {
+    return degree * Math.PI / 180;
+}
+
+
+function calculateSpectralFlatness(frequencyData: Float32Array): number {
+    // Step 1: Filter out -Infinity values and convert dB to linear scale
+    const linearMagnitudes: number[] = [];
+    for (let i = 0; i < frequencyData.length; i++) {
+        const dbValue = frequencyData[i];
+        if (dbValue > -Infinity) {
+            // Convert dB to linear scale
+            linearMagnitudes.push(Math.pow(10, dbValue / 10));
+        }
+    }
+
+    // Step 2: Calculate geometric mean
+    let product = 1;
+    const n = linearMagnitudes.length;
+    for (let i = 0; i < n; i++) {
+        product *= linearMagnitudes[i];
+    }
+    const geometricMean = Math.pow(product, 1 / n);
+
+    // Step 3: Calculate arithmetic mean
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+        sum += linearMagnitudes[i];
+    }
+    const arithmeticMean = sum / n;
+
+    // Step 4: Calculate spectral flatness as the ratio of geometric mean to arithmetic mean
+    return geometricMean / arithmeticMean;
 }
