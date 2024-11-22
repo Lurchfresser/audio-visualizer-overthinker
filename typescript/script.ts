@@ -186,7 +186,7 @@ function animateOscilloscope(dataArray: Uint8Array) {
 
 function animateVoice(voiceDataArray: Uint8Array) {
     const bufferLength = voiceDataArray.length;
-    const barWidth = canvas.width / bufferLength / 2;
+    const barWidth = (canvas.width / bufferLength / 2) * 0.5;
     let middleX = canvas.width / 2;
     let middleY = canvas.height * 1 / 3;
     let jiDistance = 10;
